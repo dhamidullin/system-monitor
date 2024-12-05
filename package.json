@@ -1,0 +1,22 @@
+{
+  "name": "system-monitor",
+  "main": "src/index.ts",
+  "private": true,
+  "scripts": {
+    "start": "ts-node src/index.ts",
+    "dev": "ts-node-dev src/index.ts"
+  },
+  "dependencies": {
+    "diskusage": "^1.2.0",
+    "express": "^4.21.1",
+    "socket.io": "^4.8.1",
+    "systeminformation": "^5.23.5"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.0",
+    "@types/node": "^22.10.1",
+    "ts-node": "^10.9.2",
+    "ts-node-dev": "^2.0.0",
+    "typescript": "^5.7.2"
+  }
+}

@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <script src="https://cdn.jsdelivr.net/npm/axios@1.7.9/dist/axios.min.js" defer></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.17.21/lodash.min.js" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/socket.io-client@4.8.1/dist/socket.io.min.js" defer></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/numeral.js/2.0.6/numeral.min.js" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+</head>
+
+<body>
+  <div x-data="BooterSpecs()" class="page">
+    <h1>Booter Raspberry pi 5 specs</h1>
+
+    <div x-show="!latestData" class="loading">
+      Loading...
+    </div>
+
+    <div x-show="latestData" class="stats-block">
+      <p>Clients count: <span x-text="latestData.clientsCount"></span></p>
+
+      <h2>CPU</h2>
+
+      <ul>
+        <li>CPU Temperature Main: <span x-text="latestData.stats.cpuTemperature.main"></span></li>
+        <!-- <li>CPU Temperature Max: <span x-text="latestData.stats.cpuTemperature.max"></span></li> -->
+        <!-- <li>Average Load: <span x-text="latestData.stats.cpuLoad.avgLoad"></span></li> -->
+        <li>Current Load: <span x-text="pad(latestData.stats.cpuLoad.currentLoad)"></span>%</li>
+
+        <!-- <li>Current Load User: <span x-text="latestData.stats.cpuLoad.currentLoadUser"></span></li> -->
+        <!-- <li>Current Load System: <span x-text="latestData.stats.cpuLoad.currentLoadSystem"></span></li> -->
+        <!-- <li>Current Load Idle: <span x-text="latestData.stats.cpuLoad.currentLoadIdle"></span></li> -->
+        <!-- <li>Current Load Nice: <span x-text="latestData.stats.cpuLoad.currentLoadNice"></span></li> -->
+        <!-- <li>Current Load IRQ: <span x-text="latestData.stats.cpuLoad.currentLoadIrq"></span></li> -->
+
+        <!-- <li>Raw Current Load: <span x-text="latestData.stats.cpuLoad.rawCurrentLoad"></span></li> -->
+        <!-- <li>Raw Current Load User: <span x-text="latestData.stats.cpuLoad.rawCurrentLoadUser"></span></li> -->
+        <!-- <li>Raw Current Load System: <span x-text="latestData.stats.cpuLoad.rawCurrentLoadSystem"></span></li> -->
+        <!-- <li>Raw Current Load Idle: <span x-text="latestData.stats.cpuLoad.rawCurrentLoadIdle"></span></li> -->
+      </ul>
+
+      <ul>
+        <template x-for="(cpu, index) in latestData.stats.cpuLoad.cpus" :key="index">
+          <li>CPU #<span x-text="index"></span>: <span x-text="pad(cpu.load)"></span>%</li>
+        </template>
+      </ul>
+
+      <h2>RAM</h2>
+
+      <ul>
+        <!-- Total: Total physical RAM. -->
+        <li>Total: <span x-text="formatBytes(latestData.stats.mem.total)"></span></li>
+
+        <!-- Free: Unused RAM. -->
+        <li>Free: <span x-text="formatBytes(latestData.stats.mem.free)"></span></li>
+
+        <!-- Used: RAM in active use by applications. -->
+        <li>Used: <span x-text="formatBytes(latestData.stats.mem.used)"></span></li>
+
+        <!-- Active: Recently used RAM that won’t be freed unless necessary. -->
+        <li>Active: <span x-text="formatBytes(latestData.stats.mem.active)"></span></li>
+
+        <!-- Available: RAM readily available for new applications, includes free and reclaimable memory. -->
+        <li>Available: <span x-text="formatBytes(latestData.stats.mem.available)"></span></li>
+
+        <!-- Buffers: Memory used for temporary I/O operations. -->
+        <li>Buffers: <span x-text="formatBytes(latestData.stats.mem.buffers)"></span></li>
+
+        <!-- Cached: Memory used for disk caching. -->
+        <li>Cached: <span x-text="formatBytes(latestData.stats.mem.cached)"></span></li>
+
+        <!-- Slab: Memory used by the kernel for managing resources. -->
+        <li>Slab: <span x-text="formatBytes(latestData.stats.mem.slab)"></span></li>
+
+        <!-- Buffcache: Combination of Buffers and Cached memory. -->
+        <li>Buffcache: <span x-text="formatBytes(latestData.stats.mem.buffcache)"></span></li>
+
+        <!-- Swap Total: Total swap space. -->
+        <li>Swap Total: <span x-text="formatBytes(latestData.stats.mem.swaptotal)"></span></li>
+
+        <!-- Swap Used: Swap space currently in use. -->
+        <li>Swap Used: <span x-text="formatBytes(latestData.stats.mem.swapused)"></span></li>
+
+        <!-- Swap Free: Unused swap space. -->
+        <li>Swap Free: <span x-text="formatBytes(latestData.stats.mem.swapfree)"></span></li>
+
+        <!-- Writeback: Data waiting to be written to disk. -->
+        <li>Writeback: <span x-text="formatBytes(latestData.stats.mem.writeback)"></span></li>
+
+        <!-- Dirty: Data modified in memory but not yet written to disk. -->
+        <li>Dirty: <span x-text="formatBytes(latestData.stats.mem.dirty)"></span></li>
+      </ul>
+
+      <h2>Disk</h2>
+
+      <ul>
+        <!-- Total: Total disk space. -->
+        <li>Total: <span x-text="formatBytes(latestData.stats.disk.total)"></span></li>
+
+        <!-- Free: Unallocated disk space. -->
+        <li>Free: <span x-text="formatBytes(latestData.stats.disk.free)"></span></li>
+
+        <!-- Available: Disk space available for use (excludes reserved). -->
+        <li>Available: <span x-text="formatBytes(latestData.stats.disk.available)"></span></li>
+
+        <!-- Used: Disk space currently in use. -->
+        <li>Used: <span x-text="formatBytes(latestData.stats.disk.total - latestData.stats.disk.free)"></span></li>
+      </ul>
+
+    </div>
+  </div>
+
+  <script>
+    function BooterSpecs() {
+      return {
+        latestData: null,
+        pad(num) {
+          return _.padStart(num.toFixed(0).toString(), 2, '0')
+        },
+        formatBytes(bytes) {
+          return numeral(bytes).format('0.00 b')
+        },
+        init() {
+          window.booterSpecsComponent = this
+          const socket = io()
+
+          socket.on('stats', (message) => {
+            this.latestData = JSON.parse(message)
+          })
+        }
+      }
+    }
+  </script>
+</body>
+
+<style>
+  p {
+    margin: 8px 0;
+  }
+</style>
+
+</html>
