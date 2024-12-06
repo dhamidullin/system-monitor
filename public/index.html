@@ -11,7 +11,7 @@
 
 <body>
   <div x-data="BooterSpecs()" class="page">
-    <h1>Booter Raspberry pi 5 specs</h1>
+    <h1>Booter Raspberry pi 5 specs <span x-text="heartbeats[heartbeat]"></span></h1>
 
     <div x-show="!latestData" class="loading">
       Loading...
@@ -115,6 +115,8 @@
     function BooterSpecs() {
       return {
         latestData: null,
+        heartbeat: 0,
+        heartbeats: ['-', '\\', '|', '/'],
         pad(num) {
           return _.padStart(num.toFixed(0).toString(), 2, '0')
         },
@@ -127,6 +129,13 @@
 
           socket.on('stats', (message) => {
             this.latestData = JSON.parse(message)
+
+            this.heartbeat++
+            if (this.heartbeat >= this.heartbeats.length) {
+              this.heartbeat = 0
+            }
+
+            console.log('this.heartbeat', this.heartbeat)
           })
         }
       }
